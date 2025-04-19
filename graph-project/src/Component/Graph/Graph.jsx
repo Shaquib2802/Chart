@@ -1,198 +1,151 @@
-import React, { useEffect, useState } from "react";
-import ApexCharts from "react-apexcharts";
 import {
-  RiExchangeDollarLine,
-  RiShieldUserLine,
-  RiShoppingBag2Line,
-  RiMoneyDollarCircleLine,
-} from "react-icons/ri";
-import { IoArrowUpOutline, IoArrowDown } from "react-icons/io5";
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+} from "chart.js";
+import React from "react";
+import { Bar, Line } from "react-chartjs-2";
+import { useQuery } from "@tanstack/react-query";
+import { Get_Graph } from "../Service/Get_Graph";
 
-const Graph = () => {
-  const [chartData, setChartData] = useState(null);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Tooltip
+);
 
-  useEffect(() => {
-    // Fetch data from your API
-    const fetchData = async () => {
-      const response = await fetch("your_api_endpoint_here");
-      const data = await response.json();
-      if (data.response_code === 200) {
-        setChartData(data);
-      }
-    };
+const Charts = () => {
+  const {
+    data: graphData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["graph"],
+    queryFn: Get_Graph,
+  });
 
-    fetchData();
-  }, []);
+  if (isLoading) return <div className="p-4">Loading chart...</div>;
+  if (isError || !graphData?.data)
+    return <div className="p-4">Error loading chart data</div>;
 
-  if (!chartData) {
-    return <div>Loading...</div>;
-  }
+  const labels = graphData.data.stage || [];
+  const dataValues = graphData.data.stage_data || [];
 
-  const chartOptions = {
-    chart: {
-      id: "basic-bar",
-    },
-    xaxis: {
-      categories: chartData.stage,
-    },
-    plotOptions: {
-      bar: {
-        borderRadius: 4,
-        horizontal: false,
-        endingShape: "rounded",
+  const chartData1 = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Lead Stage Count",
+        data: dataValues,
+        backgroundColor: "rgba(75, 85, 99, 0.6)",
+        borderRadius: 5,
+        barThickness: 30,
+        borderSkipped: false,
+      },
+    ],
+  };
+
+  const optionData1 = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        ticks: {
+          color: "#af7ac5",
+          font: { size: 10, weight: "600" },
+        },
+        grid: { display: false },
+      },
+      y: {
+        ticks: {
+          color: "#af7ac5",
+          font: { size: 12, weight: "600" },
+        },
+        grid: { display: true },
       },
     },
-    dataLabels: {
-      enabled: false,
-    },
-    title: {
-      text: "Stages",
-      align: "left",
+    plugins: {
+      legend: {
+        labels: {
+          color: "#4B5563",
+          font: { weight: "600" },
+        },
+      },
     },
   };
 
-  const chartSeries = [
-    {
-      name: "Stage Data",
-      data: chartData.stage_data,
+  const chartData2 = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Lead Trend",
+        data: dataValues,
+        borderColor: "#4B5563",
+        borderWidth: 2,
+        fill: false,
+
+        pointRadius: 3,
+        pointBackgroundColor: "#4B5563",
+      },
+    ],
+  };
+
+  const optionData2 = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          color: "#4B5563",
+          font: { size: 10, weight: "600" },
+        },
+      },
+      y: {
+        grid: { display: false },
+        ticks: {
+          color: "#4B5563",
+          font: { size: 12, weight: "600" },
+        },
+      },
     },
-    {
-      name: "Stage Percentage",
-      data: chartData.stage_per,
+    plugins: {
+      legend: {
+        labels: {
+          color: "#4B5563",
+          font: { weight: "600" },
+        },
+      },
+      tooltip: {
+        enabled: true,
+      },
     },
-  ];
+  };
 
   return (
-    <div>
-      <div className="flex justify-around">
-        <div className="bg-[#D6DFFD] rounded-md my-5  w-60  p-4  max-w-sm shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <div className="text-gray-500 font-semibold tracking-wide text-xs">
-                Visitors
-              </div>
-              <div className="  font-semibold text-gray-800">698k</div>
-              <div className="flex items-center ">
-                <div>
-                  <IoArrowUpOutline className="mt-1 text-sm  text-green-600" />
-                </div>
-                <div className="text-green-500 text-xs font-semibold mt-1">
-                  {" "}
-                  25% <span className="text-gray-400">Last Month</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-200 p-1 rounded-md">
-              <RiShieldUserLine className="text-gray-500 text-lg" />
-            </div>
-          </div>
+    <div className="p-5 flex flex-col md:flex-row gap-8">
+      <div className="bg-white shadow-md border border-gray-300 rounded-md w-full md:w-1/2 p-4 h-[400px]">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+          Bar Chart - Lead Stages
+        </h2>
+        <Bar data={chartData1} options={optionData1} />
+      </div>
 
-          <div className="h-16 w-full">
-            <ApexCharts
-              options={chartOptions}
-              series={chartSeries}
-              type="bar"
-              height={160}
-            />
-          </div>
-        </div>
-
-        <div className="bg-[#F3F6E1] rounded-md my-5  w-60 p-4  max-w-sm shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <div className="text-gray-500 font-semibold text-xs tracking-wide">
-                Bookings
-              </div>
-              <div className=" font-semibold text-gray-800">10.63k</div>
-              <div className="flex items-center ">
-                <div>
-                  <IoArrowDown className="mt-1 text-sm  text-red-600" />
-                </div>
-                <div className="text-red-500 text-xs font-semibold mt-1">
-                  {" "}
-                  .5% <span className="text-gray-500">Last Month </span>{" "}
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-200 p-1.5 rounded-md">
-              <RiShoppingBag2Line className="text-gray-500 text-lg" />
-            </div>
-          </div>
-
-          <div className="h-16 w-full">
-            <ApexCharts
-              options={chartOptions}
-              series={chartSeries}
-              type="line"
-              height={160}
-            />
-          </div>
-        </div>
-        <div className="bg-[#FFEAE9] rounded-md my-5 w-60  p-4  max-w-sm shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <div className="text-gray-500 font-semibold tracking-wide text-xs">
-                Revenue
-              </div>
-              <div className=" font-semibold text-gray-800">85420k</div>
-              <div className="flex items-center ">
-                <div>
-                  <IoArrowUpOutline className="mt-1 text-sm  text-red-600" />
-                </div>
-                <div className="text-red-500 text-xs font-semibold mt-1">
-                  {" "}
-                  2.1% <span className="text-gray-400">Last Month</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-200 p-1 rounded-md">
-              <RiMoneyDollarCircleLine className="text-gray-500 text-lg" />
-            </div>
-          </div>
-
-          <div className="h-16 w-full">
-            <ApexCharts
-              options={chartOptions}
-              series={chartSeries}
-              type="bar"
-              height={160}
-            />
-          </div>
-        </div>
-        <div className="bg-[#D8F6D8] rounded-md my-5  w-60 p-4  max-w-sm shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <div className="text-gray-500 font-semibold text-xs tracking-wide">
-                Rooms
-              </div>
-              <div className=" font-semibold text-gray-800">45/365</div>
-              <div className="flex items-center ">
-                <div>
-                  <IoArrowUpOutline className="mt-1 text-sm  text-green-600" />
-                </div>
-                <div className="text-green-500 text-xs font-semibold mt-1">
-                  {" "}
-                  .5% <span className="text-gray-500">Last Month </span>{" "}
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-200 p-1.5 rounded-md">
-              <RiExchangeDollarLine className="text-gray-500 text-lg" />
-            </div>
-          </div>
-
-          <div className="h-16 w-full">
-            <ApexCharts
-              options={chartOptions}
-              series={chartSeries}
-              type="line"
-              height={160}
-            />
-          </div>
-        </div>
+      <div className="bg-white shadow-md border border-gray-300 rounded-md w-full md:w-1/2 p-4 h-[400px]">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+          Line Chart - Lead Trend
+        </h2>
+        <Line data={chartData2} options={optionData2} />
       </div>
     </div>
   );
 };
 
-export default Graph;
+export default Charts;
