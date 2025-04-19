@@ -22,18 +22,10 @@ ChartJS.register(
 );
 
 const Charts = () => {
-  const {
-    data: graphData,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: graphData } = useQuery({
     queryKey: ["graph"],
     queryFn: Get_Graph,
   });
-
-  if (isLoading) return <div className="p-4">Loading chart...</div>;
-  if (isError || !graphData?.data)
-    return <div className="p-4">Error loading chart data</div>;
 
   const labels = graphData.data.stage || [];
   const dataValues = graphData.data.stage_data || [];
